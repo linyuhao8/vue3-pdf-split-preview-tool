@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 
 import PdfPreviewPanel from '@/components/preview/PdfPreviewPanel.vue'
 import PdfToolbar from '@/components/preview/PdfToolbar.vue'
@@ -33,6 +33,17 @@ const pdfList: PdfItem[] = Object.entries(pdfModules)
 // Keep all page-level state here and only pass data down via props.
 const defaultPdf = pdfList[0] ?? null
 const activePdfId = ref<number | null>(defaultPdf?.id ?? null)
+const isDragging = ref<boolean>(false)
+
+function getInitialLeftPanelWidth(): number {
+  if (typeof window === 'undefined') {
+    return 560
+  }
+
+  return Math.round(window.innerWidth * 0.55)
+}
+
+const leftPanelWidth = ref<number>(getInitialLeftPanelWidth())
 
 const activePdf = computed<PdfItem | null>(() => {
   if (!defaultPdf) {
@@ -45,13 +56,50 @@ const activePdf = computed<PdfItem | null>(() => {
 function handlePdfChange(pdf: PdfItem): void {
   activePdfId.value = pdf.id
 }
+
+function handlePointerMove(event: PointerEvent): void {
+  if (!isDragging.value) {
+    return
+  }
+
+  const minWidth = 320
+  const maxWidth = window.innerWidth - 320
+  leftPanelWidth.value = Math.min(Math.max(event.clientX, minWidth), maxWidth)
+}
+
+function handlePointerUp(): void {
+  isDragging.value = false
+  window.removeEventListener('pointermove', handlePointerMove)
+  window.removeEventListener('pointerup', handlePointerUp)
+}
+
+function handleResizeStart(event: PointerEvent): void {
+  isDragging.value = true
+  event.preventDefault()
+
+  window.addEventListener('pointermove', handlePointerMove)
+  window.addEventListener('pointerup', handlePointerUp)
+}
+
+onBeforeUnmount(() => {
+  handlePointerUp()
+})
 </script>
 
 <template>
   <div class="page">
-    <section class="left-panel">
+    <section class="left-panel" :style="{ width: `${leftPanelWidth}px` }">
       <WebsitePreviewPanel />
     </section>
+
+    <div
+      class="panel-resizer"
+      :class="{ 'panel-resizer-active': isDragging }"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize panels"
+      @pointerdown="handleResizeStart"
+    />
 
     <section class="right-panel">
       <div class="right-toolbar">
@@ -74,12 +122,34 @@ function handlePdfChange(pdf: PdfItem): void {
 }
 
 .left-panel {
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  border-right: 1px solid #ddd;
   background: #f8fafc;
+}
+
+.panel-resizer {
+  flex: 0 0 8px;
+  position: relative;
+  cursor: col-resize;
+  background: linear-gradient(180deg, #e2e8f0, #cbd5e1);
+}
+
+.panel-resizer::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 48px;
+  border-radius: 999px;
+  background: rgba(71, 85, 105, 0.45);
+  transform: translate(-50%, -50%);
+}
+
+.panel-resizer-active {
+  background: linear-gradient(180deg, #93c5fd, #60a5fa);
 }
 
 .right-panel {
