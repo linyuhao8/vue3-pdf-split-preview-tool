@@ -11,16 +11,34 @@ type PdfItem = {
   url: string
 }
 
-const pdfList: PdfItem[] = [
-  { id: 1, name: 'sample-local-pdf.pdf', url: '/pdfs/sample-local-pdf.pdf' },
-  { id: 2, name: 'sample.pdf', url: '/pdfs/sample.pdf' },
-]
+const pdfModules = import.meta.glob('../assets/pdfs/*.pdf', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+}) as Record<string, string>
+
+const pdfList: PdfItem[] = Object.entries(pdfModules)
+  .map(([path, url], index) => {
+    const segments = path.split('/')
+    const fileName = segments[segments.length - 1] ?? `pdf-${index + 1}.pdf`
+
+    return {
+      id: index + 1,
+      name: fileName,
+      url,
+    }
+  })
+  .sort((left, right) => left.name.localeCompare(right.name))
 
 // Keep all page-level state here and only pass data down via props.
-const defaultPdf = pdfList[0]!
-const activePdfId = ref<number>(defaultPdf.id)
+const defaultPdf = pdfList[0] ?? null
+const activePdfId = ref<number | null>(defaultPdf?.id ?? null)
 
-const activePdf = computed<PdfItem>(() => {
+const activePdf = computed<PdfItem | null>(() => {
+  if (!defaultPdf) {
+    return null
+  }
+
   return pdfList.find((item) => item.id === activePdfId.value) ?? defaultPdf
 })
 
@@ -37,11 +55,12 @@ function handlePdfChange(pdf: PdfItem): void {
 
     <section class="right-panel">
       <div class="right-toolbar">
-        <PdfToolbar :pdf-list="pdfList" :active-id="activePdfId" @change="handlePdfChange" />
+        <PdfToolbar :pdf-list="pdfList" :active-id="activePdfId ?? -1" @change="handlePdfChange" />
       </div>
 
       <div class="right-viewer">
-        <PdfPreviewPanel :pdf-url="activePdf.url" />
+        <PdfPreviewPanel v-if="activePdf" :pdf-url="activePdf.url" />
+        <div v-else class="empty-state">No PDF files found in `src/assets/pdfs`.</div>
       </div>
     </section>
   </div>
@@ -88,5 +107,10 @@ function handlePdfChange(pdf: PdfItem): void {
   min-width: 0;
   overflow: auto;
   overscroll-behavior: contain;
+}
+
+.empty-state {
+  padding: 24px;
+  color: #475569;
 }
 </style>
