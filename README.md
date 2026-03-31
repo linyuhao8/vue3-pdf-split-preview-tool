@@ -1,5 +1,7 @@
 # vue-pdf-split
 
+![Preview screenshot](./src/assets/example-screen.png)
+
 ## English
 
 This project is a Vue 3 + Vite + Vuetify + TypeScript demo for a split preview page at `/preview`.

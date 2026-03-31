@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// 左側網站預覽的欄位定義，用來模擬真實後台表格。
 const columns = [
   'Campaign',
   'Owner',
@@ -12,6 +13,7 @@ const columns = [
   'Updated At',
 ]
 
+// 建立較寬的假資料表，方便測試水平捲動是否只發生在左側預覽區。
 const rows = Array.from({ length: 24 }, (_, index) => {
   const sequence = index + 1
 
@@ -30,6 +32,7 @@ const rows = Array.from({ length: 24 }, (_, index) => {
   }
 })
 
+// 建立較長的文章段落，方便測試垂直捲動是否只發生在左側預覽區。
 const articleSections = Array.from({ length: 12 }, (_, index) => {
   const sectionNumber = index + 1
 
@@ -43,6 +46,7 @@ const articleSections = Array.from({ length: 12 }, (_, index) => {
 
 <template>
   <div class="website-preview">
+    <!-- 首屏摘要區，模擬一般網站首頁常見的 banner / hero 區塊。 -->
     <section class="hero-section">
       <p class="eyebrow">Marketing Site Preview</p>
       <h1 class="hero-title">Quarterly campaign dashboard with long and wide content</h1>
@@ -52,6 +56,7 @@ const articleSections = Array.from({ length: 12 }, (_, index) => {
       </p>
     </section>
 
+    <!-- 摘要數據卡片，讓左側畫面看起來更像真實商業頁面。 -->
     <section class="stats-strip">
       <article class="stat-card">
         <span class="stat-label">Visitors</span>
@@ -71,6 +76,7 @@ const articleSections = Array.from({ length: 12 }, (_, index) => {
       </article>
     </section>
 
+    <!-- 寬表格區，重點是測試橫向捲動與 min-width 設定。 -->
     <section class="content-section">
       <div class="section-heading">
         <h2>Wide Planning Table</h2>
@@ -102,6 +108,7 @@ const articleSections = Array.from({ length: 12 }, (_, index) => {
       </div>
     </section>
 
+    <!-- 長內容區，重點是測試縱向捲動與連續區塊閱讀感。 -->
     <section class="content-section">
       <div class="section-heading">
         <h2>Long Editorial Content</h2>
@@ -128,6 +135,7 @@ const articleSections = Array.from({ length: 12 }, (_, index) => {
 
 <style scoped>
 .website-preview {
+  /* 整體故意做得比左欄常見寬度更寬，讓水平捲動更容易被測到。 */
   min-width: 1280px;
   padding: 24px;
   color: #0f172a;
@@ -207,11 +215,13 @@ const articleSections = Array.from({ length: 12 }, (_, index) => {
 }
 
 .table-scroll {
+  /* 只讓表格區自己負責水平捲動，避免破壞外層 layout。 */
   overflow-x: auto;
   margin-top: 18px;
 }
 
 .data-table {
+  /* 故意比容器更寬，確保會出現 horizontal scroll。 */
   width: 100%;
   min-width: 1440px;
   border-collapse: collapse;
